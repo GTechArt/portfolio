@@ -37,34 +37,27 @@ Template:
 
 | #   | Title                                                              | Date       | Status |
 |-----|--------------------------------------------------------------------|------------|--------|
-| 001 | [Orchestration](#adr-0001-orchestration)                           | 2026-05-26 | Active |
+| 001 | [Container orchestration: Docker Compose](#adr-0001-container-orchestration-docker-compose)                           | 2026-05-26 | Active |
 | 002 | [Visual identity & CSS stack](#adr-0002-visual-identity--css-stack)| 2026-05-26 | Active |
 | 003 | [Web stack: Python 3 + Django](#adr-0003-web-stack-python-3--django)| 2026-05-26 | Active |
 | 004 | [Code hosting & CI/CD: GitHub + Actions](#adr-0004-code-hosting--cicd-github--actions)| 2026-05-26 | Active |
-| 005 | [Knowledge base: Notion + Claude Project KB](#adr-0005-knowledge-base-notion--claude-project-kb)| 2026-05-26 | Active |
-| 006 | [Control plane / Data plane split](#adr-0006-control-plane--data-plane-split)| 2026-05-26 | Active |
-| 007 | [Mono-repo layout](#adr-0007-mono-repo-layout)                     | 2026-05-26 | Active |
-| 008 | [uv: one project per service](#adr-0008-uv-one-project-per-service)| 2026-05-26 | Active |
-| 009 | [Reverse proxy: custom Nginx with Brotli](#adr-0009-reverse-proxy-custom-nginx-with-brotli)| 2026-05-26 | Active |
-| 010 | [Task runner: Makefile](#adr-0010-task-runner-makefile)            | 2026-05-26 | Active |
-| 011 | [Dev environment: WSL2 + Docker Desktop](#adr-0011-dev-environment-wsl2--docker-desktop)| 2026-05-26 | Active |
-| 012 | [Secret management: SOPS + age](#adr-0012-secret-management-sops--age)| 2026-05-26 | Active |
+| 005 | [Control plane / Data plane split](#adr-0005-control-plane--data-plane-split)| 2026-05-26 | Active |
+| 006 | [Mono-repo layout](#adr-0006-mono-repo-layout)                     | 2026-05-26 | Active |
+| 007 | [uv: one project per service](#adr-0007-uv-one-project-per-service)| 2026-05-26 | Active |
+| 008 | [Reverse proxy: custom Nginx with Brotli](#adr-0008-reverse-proxy-custom-nginx-with-brotli)| 2026-05-26 | Active |
+| 009 | [Secret management: SOPS + age](#adr-0009-secret-management-sops--age)| 2026-05-26 | Active |
+| 010 | [Configuration management: Ansible](#adr-0010-configuration-management-ansible)| 2026-05-27 | Active |
 
 ---
 
-## ADR-0001: Orchestration
+## ADR-0001: Container orchestration: Docker Compose
 
 - **Date:** 2026-05-26
 - **Status:** Active
-- **Context:** The primary goal of this project is to orchestrate service
-  deployment correctly and securely. Orchestration choices set the tone for
-  everything else (CI/CD, secrets, networking).
-- **Decision:** Docker Compose for basic orchestration in development,
-  Terraform later for infrastructure automation on the target VM.
-- **Alternatives:** N/A at this stage. Kubernetes was considered but is
-  deliberately deferred — running a single-node K8s for a personal portfolio
-  would be a learning artefact, not a fit. K8s is a separate, explicit
-  learning goal pursued elsewhere.
+- **Context:** Runtime containers on Linux VM with multi-services (Python/Nginx). Env: WSL2 in dev and single Linux VM in prod.
+- **Decision:** Docker Compose for orchestration. The Portfolio is a small project, and Docker Compose lets us run in the same environments for dev and prod.
+- **Alternatives:** K8s deliberately deferred to a separate learning project. Not deployed in the portfolio infra to avoid the résumé-driven complexity.
+  Swarm is in maintenance mode since Mirantis acquisition (2019). Nomad is simpler that K8s but what if chosen between Nomad and K8s, the learning budget goes to K8s for career leverage.
 - **Consequences:** Capitalises on existing Docker knowledge. Important
   security note: the Docker socket exposure required by the deployer service
   is a high-risk surface — see ADR-0006 and `docs/security.md`.
@@ -123,22 +116,7 @@ Template:
 
 ---
 
-## ADR-0005: Knowledge base: Notion + Claude Project KB
-
-- **Date:** 2026-05-26
-- **Status:** Active
-- **Context:** Need for living documentation that can be edited mid-
-  conversation, with reliable retrieval by an AI assistant.
-- **Decision:** Hybrid approach. Living docs in Notion; stabilised snapshots
-  exported to the native Claude Project knowledge base.
-- **Alternatives:** Claude KB alone — passive reads but no live editing.
-  Notion alone — less systematic access by Claude.
-- **Consequences:** Slight overhead of dual maintenance, but the best of
-  both worlds.
-
----
-
-## ADR-0006: Control plane / Data plane split
+## ADR-0005: Control plane / Data plane split
 
 - **Date:** 2026-05-26
 - **Status:** Active
@@ -163,7 +141,7 @@ Template:
 
 ---
 
-## ADR-0007: Mono-repo layout
+## ADR-0006: Mono-repo layout
 
 - **Date:** 2026-05-26
 - **Status:** Active
@@ -187,7 +165,7 @@ Template:
 
 ---
 
-## ADR-0008: uv: one project per service
+## ADR-0007: uv: one project per service
 
 - **Date:** 2026-05-26
 - **Status:** Active
@@ -205,7 +183,7 @@ Template:
 
 ---
 
-## ADR-0009: Reverse proxy: custom Nginx with Brotli
+## ADR-0008: Reverse proxy: custom Nginx with Brotli
 
 - **Date:** 2026-05-26
 - **Status:** Active
@@ -222,40 +200,7 @@ Template:
 
 ---
 
-## ADR-0010: Task runner: Makefile
-
-- **Date:** 2026-05-26
-- **Status:** Active
-- **Context:** Need a single entry point for common commands (build, test,
-  deploy, local up/down).
-- **Decision:** `Makefile` at the repository root.
-- **Alternatives:** `just` (Justfile) — cleaner syntax, growing adoption,
-  but still niche in 2026. Make is installed by default everywhere.
-- **Consequences:** Universal DevOps convention. No extra install. Knowing
-  how to read a Makefile is a transferable skill across the ecosystem
-  (Kubernetes, Terraform, Docker).
-
----
-
-## ADR-0011: Dev environment: WSL2 + Docker Desktop
-
-- **Date:** 2026-05-26
-- **Status:** Active
-- **Context:** Host machine is Windows.
-- **Decision:** Develop inside WSL2 (Ubuntu 26.04). Docker Desktop on
-  Windows with WSL2 integration. Code lives under `/home/<user>/...`, never
-  under `/mnt/c/...` for performance reasons.
-- **Alternatives:** Native Docker Engine inside WSL2, no Docker Desktop —
-  viable, free, lighter, but slightly more setup. Podman Desktop — Docker
-  Desktop alternative, less mature on some integrations.
-- **Consequences:** Native VS Code integration via the WSL extension.
-  Docker socket reachable from inside WSL2. Triggers a security concern to
-  scope for the `container-deployer` service that will need to access this
-  socket — see `docs/security.md`.
-
----
-
-## ADR-0012: Secret management: SOPS + age
+## ADR-0009: Secret management: SOPS + age
 
 - **Date:** 2026-05-26
 - **Status:** Active
@@ -271,3 +216,14 @@ Template:
 - **Consequences:** Workflow more representative of professional practice.
   Initial learning curve. `age` keys must be protected locally — ideally
   inside a personal vault.
+
+---
+
+## ADR-0010: Configuration management: Ansible
+
+- **Date:** 2026-05-27
+- **Status:** Active
+- **Context:**  The VM requires initial setup and must be re-configurable without full reprovisioning.
+- **Decision:** Altough Ansible isn't the best solution in this case, it is widely adopted by the companies and this project is an opportunity to build that skill. Ansible is robust and exist since 2013.
+- **Alternatives:** Chef and Puppet are less widely used by DevOps teams and the overhead is too much for a little projet like that. cloud-init is a correct choice, but not idempotent and prefer to learn Ansible
+- **Consequences:** It ensures configuration consistency (state reconvergence) and facilitates reproducibility (idempotent). Learning courbe on the new tools is important and use Ansible on one VM is inabituel
